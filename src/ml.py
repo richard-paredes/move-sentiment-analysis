@@ -11,6 +11,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.base import BaseEstimator
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
 from dataclasses import make_dataclass
@@ -62,13 +63,26 @@ def vectorize(df: pd.DataFrame):
 def split_data(X, y):
     return train_test_split(X, y, test_size=0.2)
 
-def train(X_train, y_train):
-    model = MultinomialNB(
-        fit_prior=False # Ensure equal class probabilities for documents, this way new
-                        # reviews won't get a bias fitted from the % of sentiment 
-                        # based solely on training data. Instead, it will come
-                        # from the features of the document.
-    )
+def create_model_by_algorithm(alg: str):
+    if alg.lower() == "multinomialnb":
+        return MultinomialNB(
+                fit_prior=False # Ensure equal class probabilities for documents, this way new
+                            # reviews won't get a bias fitted from the % of sentiment 
+                            # based solely on training data. Instead, it will come
+                            # from the features of the document.
+                )
+    if alg.lower() == "logreg":
+        return LogisticRegression(
+            penalty='l2',
+            solver='saga',
+            multi_class='multinomial',
+            class_weight='balanced',
+            C=0.5
+        )
+
+def train(alg: str, X_train, y_train):
+    model = create_model_by_algorithm(alg)
+    print(model)
     model.fit(X=X_train, y=y_train)
     return model
 
@@ -85,13 +99,14 @@ def evaluate(model, X_test, y_test):
     print(f"F1 Score: {f1}")
     print(f"Confusion matrix: {conf_matrix}")
 
-def create_model(output_filename: str):
+def create_model(output_filename: str, alg: str):
+    print(f'Training a model with algorithm: {alg}')
     download_data()
     df = prepare_dataframe()
     df['review'] = df['review'].apply(preprocess)
     X, y = (vectorize(df), df['sentiment'])
     X_train, X_test, y_train, y_test = split_data(X, y)
-    model = train(X_train, y_train)
+    model = train(alg, X_train, y_train)
     save_file(model, output_filename)
     evaluate(model, X_test, y_test)
 
@@ -104,14 +119,15 @@ def load_pretrained(filename: str):
     return model, vectorizer
 
 @click.command()
-@click.option("--pretrained", default=True, help='Use a pretrained semantic classifer.')
-def main(pretrained: bool):
-    """Runs semantic analysis on a model"""
+@click.option("--pretrained",is_flag=True,show_default=True,help='Use a pretrained semantic classifer.')
+@click.option("--alg",type=click.Choice(["multinomialNB","logreg"], case_sensitive=False),default="None")
+def main(pretrained: bool, alg: click.Choice):
+    """Runs semantic analysis on a review. Trains a model"""
     click.echo(f'Using a pretrained model? {pretrained}')
-    filename = "multinomialNB.pkl"
-    if not pretrained: create_model(filename)
+    filename = f"{alg}.pkl"
+    if not pretrained: create_model(filename, alg)
     model, vectorizer = load_pretrained(filename)
-    review = click.prompt("Enter a review to analyze: ")
+    review = click.prompt("Enter a review to analyze")
     cleaned_review = preprocess(review)
     vector = vectorizer.transform([cleaned_review])
     predicted_sentiments = model.predict(vector)
