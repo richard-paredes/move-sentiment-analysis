@@ -73,11 +73,7 @@ def create_model_by_algorithm(alg: str):
                 )
     if alg.lower() == "logreg":
         return LogisticRegression(
-            penalty='l2',
-            solver='saga',
-            multi_class='multinomial',
-            class_weight='balanced',
-            C=0.5
+            solver='lbfgs'
         )
 
 def train(alg: str, X_train, y_train):
