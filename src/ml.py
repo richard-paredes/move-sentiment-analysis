@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.base import BaseEstimator
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
 from dataclasses import make_dataclass
@@ -64,21 +65,24 @@ def split_data(X, y):
     return train_test_split(X, y, test_size=0.2)
 
 def create_model_by_algorithm(alg: str):
-    if alg.lower() == "multinomialnb":
+    alg = alg.lower()
+    if alg == "multinomialnb":
         return MultinomialNB(
                 fit_prior=False # Ensure equal class probabilities for documents, this way new
                             # reviews won't get a bias fitted from the % of sentiment 
                             # based solely on training data. Instead, it will come
                             # from the features of the document.
                 )
-    if alg.lower() == "logreg":
+    if alg == "logreg":
         return LogisticRegression(
             solver='lbfgs'
         )
+    if alg == "svm":
+        return LinearSVC()
 
 def train(alg: str, X_train, y_train):
     model = create_model_by_algorithm(alg)
-    print(model)
+    assert model != None, "Invalid algorithm selected for model training"
     model.fit(X=X_train, y=y_train)
     return model
 
@@ -116,7 +120,7 @@ def load_pretrained(filename: str):
 
 @click.command()
 @click.option("--pretrained",is_flag=True,show_default=True,help='Use a pretrained semantic classifer.')
-@click.option("--alg",type=click.Choice(["multinomialNB","logreg"], case_sensitive=False),default="None")
+@click.option("--alg",type=click.Choice(["multinomialNB","logreg", "svm"], case_sensitive=False),default="None")
 def main(pretrained: bool, alg: click.Choice):
     """Runs semantic analysis on a review. Trains a model"""
     click.echo(f'Using a pretrained model? {pretrained}')
