@@ -34,3 +34,9 @@ On subsequent runs, if you don't want to regenerate the model, you can simply ru
 ```bash
 poetry run python3 src/ml.py # the --pretrained flag has a default value of True
 ```
+
+Running the web project:
+
+```bash
+poetry run fastapi run src/app.py
+```

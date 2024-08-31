@@ -1,1 +1,6 @@
 *.pkl
+
+**/corpora/
+**/tokenizers/
+
+**/.venv/

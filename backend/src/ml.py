@@ -23,10 +23,10 @@ DataPoint = make_dataclass("ReviewSentiment", [("review", str), ("sentiment", st
 def download_data():
     # Run once to install data for analyzing the movie_reviews corpus.
     
-    nltk.download("movie_reviews")
-    nltk.download("stopwords")
-    nltk.download("punkt_tab")
-    nltk.download("wordnet")
+    nltk.download("movie_reviews", download_dir="./nltk")
+    nltk.download("stopwords", download_dir="./nltk")
+    nltk.download("punkt_tab", download_dir="./nltk")
+    nltk.download("wordnet", download_dir="./nltk")
 
 def prepare_dataframe():
     reviews = [DataPoint(" ".join(movie_reviews.words(fileid)), sentiment) 
